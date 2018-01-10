@@ -10,16 +10,15 @@
 
 
 extern int device_map[8];
-extern void skein1024_cpu_init(int thr_id, int threads);
-extern void skein1024_setBlock(void *pdata);
+extern void skein1024_setBlock(void *pdata, unsigned nHeight);
 extern uint64_t skein1024_cpu_hash(int thr_id, int threads, uint64_t startNounce, int order, int threadsperblock = 256);
 extern uint64_t sk1024_keccak_cpu_hash(int thr_id, int threads, uint64_t startNounce, uint64_t *d_nonceVector, uint64_t *d_hash, int order, int threadsperblock = 32);
-extern void sk1024_keccak_cpu_init(int thr_id, int threads);
+extern void sk1024_keccak_cpu_init(int thr_id);
 extern void sk1024_set_Target(const void *ptarget);
 
 extern bool opt_benchmark;
 
-extern bool scanhash_sk1024(unsigned int thr_id, uint32_t* TheData, uint1024 TheTarget, uint64_t &TheNonce, unsigned long long max_nonce, unsigned long long *hashes_done, int throughput, int thbpSkein, int thpbKeccak)
+extern bool scanhash_sk1024(unsigned int thr_id, uint32_t* TheData, uint1024 TheTarget, uint64_t &TheNonce, unsigned long long max_nonce, unsigned long long *hashes_done, int throughput, int thbpSkein, unsigned int nHeight)
 {
 	uint64_t *ptarget = (uint64_t*)&TheTarget;
 
@@ -34,14 +33,13 @@ extern bool scanhash_sk1024(unsigned int thr_id, uint32_t* TheData, uint1024 The
 		cudaDeviceReset();
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 
-		skein1024_cpu_init(thr_id, throughput);
-		sk1024_keccak_cpu_init(thr_id, throughput);
+		sk1024_keccak_cpu_init(thr_id);
 
 		init[thr_id] = true;
 	}
 
 
-	skein1024_setBlock((void*)TheData);
+	skein1024_setBlock((void*)TheData, nHeight);
 	sk1024_set_Target(ptarget);
 
 	int order = 0;
@@ -67,7 +65,7 @@ extern bool scanhash_sk1024(unsigned int thr_id, uint32_t* TheData, uint1024 The
 			return true;
 		}
 		else {
-			printf("GPU #%d: result for nonce $%08X does not validate on CPU! \n", thr_id, foundNonce);
+			printf("GPU #%d: result for nonce %lu does not validate on CPU! \n", thr_id, foundNonce);
 		}
 	}
 	((uint64_t*)TheData)[26] += throughput;

@@ -8,6 +8,9 @@ namespace Core
 {
 	MinerThread::MinerThread(unsigned int pData)
 	{
+		m_unNonceCount = 0;
+		m_unNonces[4] = {0};
+		m_unBits = 0;
 		m_pBLOCK = NULL;
 		m_GpuId = pData;
 		m_bBlockFound =false; 
@@ -16,6 +19,7 @@ namespace Core
 		total_mhashes_done = 0;
 		m_nThroughput = 0;
 		m_bBenchmark = false;
+		m_bShutdown = false;
 	}
 
 	MinerThread::MinerThread(const MinerThread& miner)
@@ -51,50 +55,53 @@ namespace Core
 
 	void MinerThread::SK1024Miner()
 	{
+#ifdef WIN32
 		SetThreadPriority(GetCurrentThread(), 2);
-		const int throughput = GetThroughput() == 0 ? 512 * 1 * 512 * 20 : GetThroughput();
+#endif
+		const int throughput = GetThroughput() == 0 ? (512 * 896 * 28) : GetThroughput();
 		loop
 		{
 			try
 			{
+				if (m_bShutdown)
+					break;
+
 				/** Don't mine if the Connection Thread is Submitting Block or Receiving New. **/
 				while(m_bNewBlock || m_bBlockFound || !m_pBLOCK)
-					Sleep(1);
+					Sleep(10);					
 		
 				CBigNum target;
-				target.SetCompact(m_pBLOCK->GetBits());				
+				target.SetCompact(m_unBits);
+
 				if (m_bBenchmark == true)
 				{
-					target.SetCompact(0x7e006fff);
-					//target.SetCompact(0x7e7fffff);
-					//target.SetCompact(0x7d0fffff);
-					//target = target / 0x300;
+					printf("\nBenchmark Mode - Should find a TEST block every 2^(32) hashes \"On Average\"\n\n");
+					target.SetCompact(0x7d00ffff); //32-bits
 				}
-
-				//target.SetCompact(0x7d0fffff);
 
 				while(!m_bNewBlock)
 				{					
-					
+					if (m_bShutdown)
+						break;
+
 					uint1024 hash;
 					unsigned long long hashes=0;
 					unsigned int * TheData =(unsigned int*) m_pBLOCK->GetData();
 
+					unsigned nHeight = m_pBLOCK->GetHeight();
 					uint1024 TheTarget = target.getuint1024();
-					uint64_t Nonce; //= m_pBLOCK->GetNonce();
+					uint64_t Nonce;
 					bool found = false;
 					m_clLock.lock();
 					{
 						Nonce = m_pBLOCK->GetNonce();
-						//m_GpuId = 0;
-						//found = scanhash_sk1024(m_GpuId, TheData, TheTarget, Nonce, 512 * 8 * 512 * 40, &hashes, throughput, 128, 128);
-						found = scanhash_sk1024(m_GpuId, TheData, TheTarget, Nonce, 1, &hashes, throughput, 896, 1);
+						found = scanhash_sk1024(m_GpuId, TheData, TheTarget, Nonce, 1, &hashes, throughput, 896, nHeight);
 						if (hashes < 0xffffffffffff)
 							SetHashes(GetHashes()+hashes);
 
 					}
 					m_clLock.unlock();
-					
+
 					if(found)
 					{
 						m_bBlockFound = true;
@@ -106,13 +113,6 @@ namespace Core
                         						
                         break;
 					}
- //                   printf("hashes %d m_unHashes %d gethashes %d\n",hashes,m_unHashes,GetHashes());
-					/*m_clLock.lock();
-					{
-						m_pBLOCK->SetNonce(m_pBLOCK->GetNonce()+hashes); 
-					}
-					m_clLock.unlock();
-*/
 
 					if(Nonce >= MAX_THREADS) //max_thread==> max_nonce
 					{

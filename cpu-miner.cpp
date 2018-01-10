@@ -9,7 +9,6 @@
  */
 
 #include "cpuminer-config.h"
-#define _GNU_SOURCE
 
 #include "core.h"
 
@@ -101,7 +100,7 @@ static void signal_handler(int sig)
 }
 #endif
 
-#define PROGRAM_VERSION "v1.0"
+#define PROGRAM_VERSION "v1.1"
 int main(int argc, char *argv[])
 {
 	struct thr_info *thr;
@@ -112,9 +111,10 @@ int main(int argc, char *argv[])
 	SYSTEM_INFO sysinfo;
 #endif
 
-	 printf("\n        ***** SKMiner for Nvidia Maxwell/Pascal GPUs  *****\n");
-	 printf("\t             This is version "PROGRAM_VERSION" \n");
-	 printf("\t               Open Source (GPL)\n\n");
+	 printf("\n        ***** SKMiner for Nvidia Maxwell/Pascal GPUs *****\n");
+	 printf("\t             This is version " PROGRAM_VERSION " \n");
+	 printf("\t               Open Source (GPL)\n");
+	 printf("\t                  Pool Version\n\n");
 
 	 if (argc < 3)
 	 {
@@ -130,22 +130,23 @@ int main(int argc, char *argv[])
 	num_processors = cuda_num_devices();
 	std::string IP = argv[1];
 	std::string PORT = argv[2];
+	std::string LOGIN = argv[3];
 	int nThreads = num_processors;
 	bool bBenchmark = false;
 
-	if (argc > 3)
-		nThreads = boost::lexical_cast<int>(argv[3]);
-
-	int nTimeout = 10;
 	if (argc > 4)
-		nTimeout = boost::lexical_cast<int>(argv[4]);
-	int nThroughput = 512 * 512;
-	int nThroughputMultiplier = 8;
-	if (argc > 5)
-		nThroughputMultiplier = boost::lexical_cast<int>(argv[5]);
+		nThreads = boost::lexical_cast<int>(argv[4]);
 
+	int nTimeout = 30;
+	if (argc > 5)
+		nTimeout = boost::lexical_cast<int>(argv[5]);
+	int nThroughput = 512 * 896;
+	int nThroughputMultiplier = 28;
 	if (argc > 6)
-		bBenchmark = boost::lexical_cast<bool>(argv[6]);
+		nThroughputMultiplier = boost::lexical_cast<int>(argv[6]);
+
+	if (argc > 7)
+		bBenchmark = boost::lexical_cast<bool>(argv[7]);
 
 	nThroughput *= nThroughputMultiplier;
 	cuda_devicenames();
@@ -155,8 +156,7 @@ int main(int argc, char *argv[])
 #endif
 
 	printf("Initializing Miner %s:%s Threads = %i Timeout = %i | Throughput = %i\n", IP.c_str(), PORT.c_str(), nThreads, nTimeout, nThroughput);
-	Core::ServerConnection MINERS(IP, PORT, nThreads, nTimeout, nThroughput, bBenchmark);
-	loop{ Sleep(100); }
-
-
+	printf("\nPayout Address: %s\n\n", LOGIN.c_str());
+	Core::ServerConnection MINERS(IP, PORT, LOGIN, nThreads, nTimeout, nThroughput, bBenchmark);
+	loop{ Sleep(1000); }
 }

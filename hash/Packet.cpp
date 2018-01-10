@@ -5,7 +5,7 @@ namespace LLP
 {
 	Packet::Packet()
 	{
-		HEADER = ' ';
+		HEADER = 255;
 		LENGTH = 0;
 
 	}

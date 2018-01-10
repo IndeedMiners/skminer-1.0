@@ -18,7 +18,7 @@
 
 
 extern bool scanhash_sk1024(unsigned int thr_id, uint32_t* TheData, uint1024 TheTarget, uint64_t &TheNonce, 
-	unsigned long long max_nonce, unsigned long long *hashes_done, int throughput, int thbpSkein = 256, int thpbKeccak = 256);
+	unsigned long long max_nonce, unsigned long long *hashes_done, int throughput, int thbpSkein = 256, unsigned int nHeight = 0);
 
 //#ifdef __cplusplus
 //}

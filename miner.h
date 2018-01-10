@@ -34,7 +34,9 @@ typedef int ssize_t;
 # endif
 #endif
 #ifdef HAVE_ALLOCA_H
-# include <alloca.h>
+	#ifndef WIN32
+	# include <alloca.h>
+	#endif
 #elif !defined alloca
 # ifdef __GNUC__
 #  define alloca __builtin_alloca
@@ -52,7 +54,9 @@ void *alloca (size_t);
 #endif
 
 #ifdef HAVE_SYSLOG_H
-#include <syslog.h>
+	#ifndef WIN32
+	#include <syslog.h>
+	#endif
 #else
 enum {
 	LOG_ERR,
@@ -249,10 +253,6 @@ int sha256_use_8way();
 void sha256_init_8way(uint32_t *state);
 void sha256_transform_8way(uint32_t *state, const uint32_t *block, int swap);
 #endif
-
-
-//extern bool scanhash_sk1024(unsigned int m_GpuId, uint1024 TheData, uint1024 TheTarget,uint64_t TheNonce, uint32_t max_nonce, unsigned long *hashes_done);
-
 
 
 struct work_restart {
